@@ -34,9 +34,12 @@ Per configurare rapidamente un hub e un progetto, di seguito sono disponibili is
     1. Immettere un **nome di progetto**.
     1. Quando richiesto, **creare un nuovo hub**.
     1. Personalizzare l'hub:
+
         1. Scegliere **sottoscrizione**, **gruppo di risorse**, **posizione**, ecc.
         1. Connettere una nuova risorsa **Servizi di Azure AI** (ignorare AI Search).
+
     1. Rivedere e selezionare **Crea**.
+
 1. **Attendere il completamento della distribuzione** (~ 1-2 minuti).
 
 ### B. Distribuire un modello
@@ -82,7 +85,7 @@ Iniziare recuperando le informazioni necessarie da autenticare per interagire co
 1. Nel riquadro Cloud Shell immettere ed eseguire il comando seguente:
 
     ```
-    rm -r mslearn-ai-foundry -f
+    rm -r mslearn-genaiops -f
     git clone https://github.com/microsoftlearning/mslearn-genaiops mslearn-genaiops
     ```
 
@@ -91,7 +94,7 @@ Iniziare recuperando le informazioni necessarie da autenticare per interagire co
 1. Dopo aver clonato il repository, passare alla cartella contenente i file di codice dell'applicazione:  
 
     ```
-   cd mslearn-ai-foundry/Files/07
+   cd mslearn-genaiops/Files/07
     ```
 
 1. Nel riquadro della riga di comando di Cloud Shell, immettere il comando seguente per installare le librerie che verranno utilizzate:
