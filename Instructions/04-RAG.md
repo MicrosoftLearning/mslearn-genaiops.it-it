@@ -1,15 +1,18 @@
 ---
 lab:
   title: Orchestrare un sistema RAG
+  description: Informazioni su come implementare sistemi RAG (Retrieval-Augmented Generation) nelle app per migliorare l'accuratezza e la pertinenza delle risposte generate.
 ---
 
 ## Orchestrare un sistema RAG
 
 I sistemi di Generazione aumentata da recupero (RAG) integrano la capacità di modelli linguistici di grandi dimensioni con meccanismi di recupero delle informazioni ad alta efficienza, al fine di migliorare l'accuratezza e la pertinenza delle risposte generate. Sfruttando LangChain per l'orchestrazione e Fonderia Azure AI per le funzionalità di IA, è possibile creare una pipeline robusta che recupera informazioni rilevanti da un set di dati e genera risposte coerenti. In questo esercizio verranno illustrate le fasi di configurazione dell'ambiente, pre-elaborazione dei dati, generazione degli incorporamenti e creazione di un indice, che costituiscono i passaggi fondamentali per implementare in modo efficace un sistema RAG.
 
+Questo esercizio richiederà circa **30** minuti.
+
 ## Scenario
 
-Si supponga di voler creare un'applicazione che fornisca consigli sugli hotel. All'interno dell'app, si intende integrare un agente in grado non solo di fornire consigli sugli hotel, ma anche di rispondere in modo accurato alle domande che gli utenti potrebbero porre a riguardo.
+Si supponga di voler creare un'applicazione che fornisca consigli sugli hotel a Londra. All'interno dell'app, si intende integrare un agente in grado non solo di fornire consigli sugli hotel, ma anche di rispondere in modo accurato alle domande che gli utenti potrebbero porre a riguardo.
 
 È stato selezionato un modello GPT-4 per fornire risposte generative. Ora si intende sviluppare un sistema RAG in grado di fornire al modello dati contestuali basati sulle recensioni degli altri utenti, orientando così il comportamento della chat nella formulazione di consigli personalizzati.
 
@@ -25,27 +28,31 @@ Per iniziare, distribuire le risorse necessarie per creare l'applicazione.
 
     > **Nota**: se in precedenza è stata creata una sessione Cloud Shell che usa un ambiente *Bash*, passare a ***PowerShell***.
 
+1. Nella barra degli strumenti di Cloud Shell, nel menu **Impostazioni**, selezionare **Vai alla versione classica**.
+
+    **<font color="red">Verificare di passare alla versione classica di Cloud Shell prima di continuare.</font>**
+
 1. Nel riquadro PowerShell, immettere i comandi seguenti per clonare il repository di questo esercizio:
 
-     ```powershell
-    rm -r mslearn-genaiops -f
-    git clone https://github.com/MicrosoftLearning/mslearn-genaiops
-     ```
+    ```powershell
+   rm -r mslearn-genaiops -f
+   git clone https://github.com/MicrosoftLearning/mslearn-genaiops
+    ```
 
 1. Dopo aver clonato il repository, immettere i comandi seguenti per inizializzare il modello Starter. 
    
-     ```powershell
-    cd ./mslearn-genaiops/Starter
-    azd init
-     ```
+    ```powershell
+   cd ./mslearn-genaiops/Starter
+   azd init
+    ```
 
 1. Una volta richiesto, assegnare un nome al nuovo ambiente, che verrà usato come base per assegnare nomi univoci a tutte le risorse fornite.
         
 1. Successivamente, immettere il seguente comando per eseguire il modello Starter. Verrà eseguito il provisioning di un Hub AI completo delle relative risorse dipendenti, inclusi progetto AI, servizi AI associati e un endpoint online. Verranno inoltre distribuiti i modelli GPT-4 Turbo, GPT-4o e GPT-4o mini.
 
-     ```powershell
-    azd up  
-     ```
+    ```powershell
+   azd up  
+    ```
 
 1. Quando richiesto, scegliere l'abbonamento che si desidera usare e quindi scegliere una delle seguenti posizioni per la fornitura delle risorse:
    - Stati Uniti orientali
@@ -76,19 +83,65 @@ Per iniziare, distribuire le risorse necessarie per creare l'applicazione.
 
      ```powershell
     Get-AzCognitiveServicesAccount -ResourceGroupName <rg-env_name> -Name <aoai-xxxxxxxxxx> | Select-Object -Property endpoint
+     ```
+
+     ```powershell
     Get-AzCognitiveServicesAccountKey -ResourceGroupName <rg-env_name> -Name <aoai-xxxxxxxxxx> | Select-Object -Property Key1
      ```
 
 1. Copiare questi valori poiché verranno usati in seguito.
 
-## Configurare un ambiente di sviluppo locale
+## Configurare l'ambiente di sviluppo in Cloud Shell
 
-Per favorire una sperimentazione rapida e iterativa, verrà usato un notebook Python all'interno di Visual Studio Code (VS Code). Preparare VS Code per l'ideazione locale.
+Per sperimentare ed eseguire rapidamente l'iterazione, si userà un set di script Python in Cloud Shell.
 
-1. Aprire VS Code e **clonare** il repository Git seguente: [https://github.com/MicrosoftLearning/mslearn-genaiops.git](https://github.com/MicrosoftLearning/mslearn-genaiops.git)
-1. Archiviare il clone in un'unità locale e aprire la cartella dopo la clonazione.
-1. In Esplora VS Code (riquadro sinistro), aprire il notebook **04-RAG.ipynb** nella cartella **Files/04**.
-1. Eseguire tutte le celle nel notebook.
+1. Nel riquadro della riga di comando di Cloud Shell immettere il comando seguente per passare alla cartella con i file di codice usati in questo esercizio:
+
+     ```powershell
+    cd ~/mslearn-genaiops/Files/04/
+     ```
+
+1. Immettere i comandi seguenti per attivare un ambiente virtuale e installare le librerie necessarie:
+
+    ```powershell
+   python -m venv labenv
+   ./labenv/bin/Activate.ps1
+   pip install python-dotenv langchain-text-splitters langchain-community langchain-openai
+    ```
+
+1. Immettere il comando seguente per aprire il file di configurazione fornito:
+
+    ```powershell
+   code .env
+    ```
+
+    Il file viene aperto in un editor di codice.
+
+1. Nel file di codice sostituire i segnaposto **your_azure_openai_service_endpoint** e **your_azure_openai_service_api_key** con i valori dell'endpoint e della chiave copiati in precedenza.
+1. *Dopo* aver sostituito i segnaposto con l'editor di codice, usare il comando **CTRL+S** o **Fare clic con il pulsante destro del mouse > Salva** per salvare le modifiche e quindi usare il comando **CTRL+Q** o **Fare clic con il pulsante destro del mouse > Esci** per chiudere l'editor di codice mantenendo aperta la riga di comando di Cloud Shell.
+
+## Implementare RAG
+
+A questo punto si eseguirà uno script che inserisce e pre-elabora i dati, crea incorporamenti e compila un archivio vettoriale e un indice, consentendo infine di implementare un sistema RAG in modo efficace.
+
+1. Eseguire il comando seguente per **visualizzare lo script** fornito:
+
+    ```powershell
+   code RAG.py
+    ```
+
+1. Esaminare lo script e notare che usa un file CSV con recensioni di hotel come dati di base. È possibile visualizzare il contenuto di questo file eseguendo il comando `download app_hotel_reviews.csv` e aprendo il file.
+1. **Eseguire lo script** immettendo il comando seguente nella riga di comando:
+
+    ```
+   python RAG.py
+    ```
+
+1. Quando l'applicazione è in esecuzione, è possibile iniziare a porre domande, ad esempio `Where can I stay in London?`, e quindi procedere con richieste più specifiche.
+
+## Conclusione
+
+In questo esercizio è stato creato un sistema RAG tipico con i relativi componenti principali. Usando i propri documenti per informare le risposte di un modello, si forniscono dati di grounding usati dal modello linguistico di grandi dimensioni durante la formulazione di una risposta. Per una soluzione aziendale, ciò significa che è possibile vincolare l'IA generativa ai contenuti aziendali.
 
 ## Eseguire la pulizia
 

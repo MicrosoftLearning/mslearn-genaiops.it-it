@@ -1,25 +1,30 @@
 ---
 lab:
   title: Esplorare la progettazione dei prompt con Prompty
+  description: Informazioni su come usare Prompty per testare e migliorare rapidamente diverse richieste con il modello linguistico e assicurarsi che siano costruite e orchestrate per ottenere risultati ottimali.
 ---
 
 ## Esplorare la progettazione dei prompt con Prompty
 
+Questo esercizio richiede circa **45** minuti.
+
+> **Nota**: questo esercizio presuppone una certa familiarità con Fonderia Azure AI, motivo per cui alcune istruzioni sono intenzionalmente meno dettagliate per incoraggiare l'esplorazione più attiva e l'apprendimento pratico.
+
+## Introduzione
+
 Durante l'ideazione, si vuole testare e migliorare rapidamente su prompt diversi con il modello linguistico. Esistono diversi modi per affrontare la progettazione dei prompt, tramite il playground nel Portale Fonderia Azure AI o usando Prompty per un approccio più incentrato sul codice.
 
-In questo esercizio si esplora la progettazione dei prompt con Prompty in Visual Studio Code usando un modello distribuito tramite Fonderia Azure AI.
+In questo esercizio si esplora la progettazione delle richieste con Prompty in Azure Cloud Shell usando un modello distribuito tramite Fonderia Azure AI.
 
-Questo esercizio richiederà circa **40** minuti.
+## Configurare l'ambiente
 
-## Scenario
+Per completare le attività di questo esercizio, è necessario:
 
-Si supponga di voler creare un'app per aiutare gli studenti a imparare a scrivere codice in Python. Nell'app si vuole un tutor automatizzato che possa aiutare gli studenti a scrivere e valutare il codice. Tuttavia, non si vuole che l'app di chat fornisca direttamente tutte le risposte. Si vuole che gli studenti ricevano suggerimenti personalizzati che li incoraggiano a pensare a come procedere.
+- un hub di Fonderia Azure AI,
+- un progetto Fonderia Azure AI
+- Un modello distribuito (come GPT-4o).
 
-È stato selezionato un modello GPT-4 per iniziare a sperimentare. Ora si vuole applicare la progettazione dei prompt per guidare il comportamento della chat in modo che diventi un tutor che genera suggerimenti personalizzati.
-
-Per iniziare, distribuire le risorse necessarie per lavorare con questo modello nel Portale Fonderia Azure AI.
-
-## Creare un progetto e un hub di Azure per intelligenza artificiale
+### Creare un progetto e un hub di Azure per intelligenza artificiale
 
 > **Nota**: se si dispone già di un hub di Azure AI e di un progetto, è possibile ignorare questa procedura e usare il progetto esistente.
 
@@ -87,7 +92,7 @@ Per iniziare, distribuire le risorse necessarie per lavorare con questo modello 
 
 1. Copiare questi valori poiché verranno usati in seguito.
    
-## Configurare un ambiente di sviluppo locale
+### Configurare un ambiente di sviluppo locale
 
 Per sperimentare e iterare rapidamente, verrà usato Prompty in Visual Studio (VS) Code. Preparare VS Code per l'ideazione locale.
 
