@@ -1,6 +1,7 @@
 ---
 lab:
   title: Monitorare l'applicazione di IA generativa
+  description: Informazioni su come monitorare le interazioni con il modello distribuito e ottenere informazioni dettagliate su come ottimizzarne l'utilizzo con l'applicazione di IA generativa.
 ---
 
 # Monitorare l'applicazione di IA generativa
@@ -13,7 +14,7 @@ Questo esercizio richiede circa **30** minuti.
 
 In questo esercizio, viene abilitato il monitoraggio per un'app di completamento della chat e vengono visualizzate le prestazioni in Monitoraggio di Azure. È possibile interagire con il modello distribuito per generare dati, visualizzare i dati generati tramite le informazioni dettagliate della dashboard delle applicazioni di IA generativa e configurare avvisi per ottimizzare la distribuzione del modello.
 
-## 1. Configurare l'ambiente
+## Configurare l'ambiente
 
 Per completare le attività di questo esercizio, è necessario:
 
@@ -22,53 +23,60 @@ Per completare le attività di questo esercizio, è necessario:
 - un modello distribuito (come GPT-4o),
 - una risorsa di Application Insights connessa.
 
-### R. Creare un hub e un progetto Fonderia Azure AI
+### Creare un hub e un progetto Fonderia Azure AI
 
 Per configurare rapidamente un hub e un progetto, di seguito sono disponibili istruzioni semplici per usare l'interfaccia utente del portale Fonderia Azure AI.
 
-1. Passare al portale Fonderia Azure AI: aprire [https://ai.azure.com](https://ai.azure.com).
-1. Accedere con le credenziali di Azure.
-1. Creare un progetto:
-    1. Passare a **Tutti gli hub e progetti**.
-    1. Selezionare **+ Nuovo progetto**.
-    1. Immettere un **nome di progetto**.
-    1. Quando richiesto, **creare un nuovo hub**.
-    1. Personalizzare l'hub:
+1. In un Web browser, aprire il [Portale Fonderia Azure AI](https://ai.azure.com) su `https://ai.azure.com` e accedere usando le credenziali di Azure.
+1. Nella home page, selezionare **+ Crea progetto**.
+1. Nella procedura guidata **Crea un progetto**, immettere un nome appropriato per il progetto. Se viene suggerito un hub esistente, selezionare l'opzione per crearne uno nuovo. Successivamente, esaminare le risorse Azure che verranno create automaticamente per supportare l'hub e il progetto.
+1. Selezionare **Personalizza** e specificare le impostazioni seguenti per l'hub:
+    - **Nome hub**: *un nome valido per l'hub*
+    - **Sottoscrizione**: *la sottoscrizione di Azure usata*
+    - **Gruppo di risorse**: *creare o selezionare un gruppo di risorse*
+    - **Posizione**: selezionare **Informazioni su come scegliere** e quindi selezionare **gpt-4o** nella finestra Helper posizione e usare l'area consigliata\*
+    - **Connettere Servizi di Azure AI o Azure OpenAI**: *Creare una nuova risorsa di Servizi di AI*
+    - **Connettere Azure AI Search**: ignorare la connessione
 
-        1. Scegliere **sottoscrizione**, **gruppo di risorse**, **posizione**, ecc.
-        1. Connettere una nuova risorsa **Servizi di Azure AI** (ignorare AI Search).
+    > \* Le risorse Azure OpenAI sono limitate da quote di modelli regionali. In caso di superamento di un limite di quota più avanti nell'esercizio, potrebbe essere necessario creare un'altra risorsa in un'area diversa.
 
-    1. Rivedere e selezionare **Crea**.
+1. Selezionare **Avanti** per esaminare la configurazione. Quindi selezionare **Crea** e attendere il completamento del processo.
 
-1. **Attendere il completamento della distribuzione** (~ 1-2 minuti).
-
-### B. Distribuire un modello
+### Distribuire un modello
 
 Per generare dati che è possibile monitorare, è prima necessario distribuire un modello e interagire con esso. Nelle istruzioni viene chiesto di distribuire un modello GPT-4o, ma **è possibile usare qualsiasi modello** dalla raccolta Servizio OpenAI di Azure disponibile.
 
 1. Utilizzare il menu a sinistra, nella sezione **Risorse personali**, selezionare la pagina **Modelli + endpoint**.
-1. Distribuire un **modello di base** e scegliere **gpt-4o**.
-1. **Personalizzare i dettagli di distribuzione**.
-1. Impostare la **capacità** su **5.000 token al minuto (TPM)**.
+1. Nel menu **+ Distribuisci modello** selezionare **Distribuisci modello di base**.
+1. Selezionare il modello **gpt-4o** nell'elenco e distribuirlo con le impostazioni seguenti selezionando **Personalizza** nei dettagli della distribuzione:
+    - **Nome distribuzione**: *nome univoco per la distribuzione del modello*
+    - **Tipo di distribuzione**: Standard
+    - **Aggiornamento automatico della versione**: abilitato
+    - **Versione del modello**: *selezionare la versione più recente disponibile*
+    - **Risorsa di intelligenza artificiale connessa**: *selezionare la connessione alla risorsa Azure OpenAI*
+    - **Limite di velocità dei token al minuto (migliaia)**: 1.000
+    - **Filtro contenuto**: predefinitoV2
+    - **Abilitare la quota dinamica**: disabilitato
 
-L'hub e il progetto sono pronti, con tutte le risorse di Azure necessarie di cui viene eseguito automaticamente il provisioning.
+    > **Nota**: la riduzione del TPM consente di evitare l'eccessivo utilizzo della quota disponibile nella sottoscrizione in uso. 1.000 token al minuto dovrebbero essere sufficienti per i dati usati in questo esercizio. Se la quota disponibile è inferiore a questa, sarà possibile completare l'esercizio, ma potrebbero verificarsi errori se viene superato il limite di velocità.
 
-### C. Connetti Application Insights
+1. Attendere il completamento della distribuzione.
 
-Connettere Application Insights al progetto in Fonderia Azure AI per avviare il monitoraggio dei dati raccolti.
+### Connetti Application Insights
 
-1. Aprire il progetto nel portale Fonderia Azure AI.
+Connettere Application Insights al progetto in Fonderia Azure AI per iniziare a raccogliere i dati per il monitoraggio.
+
 1. Usare il menu a sinistra e selezionare la pagina **Traccia**.
 1. **Creare una nuova** risorsa di Application Insights per connettersi all'app.
-1. Immettere un **nome della risorsa di Application Insights**.
+1. Immettere un nome di risorsa di Application Insights e selezionare **Crea**.
 
 Application Insights è ora connesso al progetto e verrà iniziata l'analisi dei dati raccolti.
 
-## 2. Interagire con un modello distribuito
+## Interagire con un modello distribuito
 
 Interagire con il modello distribuito a livello di codice configurando una connessione al progetto Fonderia Azure AI usando Azure Cloud Shell. In questo modo sarà possibile inviare una richiesta al modello e generare i dati di monitoraggio.
 
-### R. Connettersi con a un modello tramite Cloud Shell
+### Connettersi con a un modello tramite Cloud Shell
 
 Iniziare recuperando le informazioni necessarie da autenticare per interagire con il modello. Accedere quindi ad Azure Cloud Shell e aggiornare la configurazione per inviare le richieste fornite al modello distribuito.
 
@@ -85,16 +93,18 @@ Iniziare recuperando le informazioni necessarie da autenticare per interagire co
 1. Nel riquadro Cloud Shell immettere ed eseguire il comando seguente:
 
     ```
-    rm -r mslearn-ai-foundry -f
+    rm -r mslearn-genaiops -f
     git clone https://github.com/microsoftlearning/mslearn-genaiops mslearn-genaiops
     ```
 
     Questo comando clona il repository GitHub contenente i file di codice per questo esercizio.
 
+    > **Suggerimento**: quando si incollano i comandi in CloudShell, l'ouput può richiedere una grande quantità di buffer dello schermo. È possibile cancellare la schermata immettendo il `cls` comando per rendere più semplice concentrarsi su ogni attività.
+
 1. Dopo aver clonato il repository, passare alla cartella contenente i file di codice dell'applicazione:  
 
     ```
-   cd mslearn-ai-foundry/Files/07
+   cd mslearn-genaiops/Files/07
     ```
 
 1. Nel riquadro della riga di comando di Cloud Shell, immettere il comando seguente per installare le librerie che verranno utilizzate:
@@ -118,9 +128,9 @@ Iniziare recuperando le informazioni necessarie da autenticare per interagire co
     1. Sostituire il segnaposto **your_project_connection_string** con la stringa di connessione del progetto (copiata dalla pagina **Panoramica** del progetto nel portale Fonderia Azure AI).
     1. Sostituire il segnaposto **your_model_deployment** con il nome assegnato alla distribuzione modello GPT-4o (per impostazione predefinita `gpt-4o`).
 
-1. *Dopo* aver sostituito i segnaposto, nell'editor di codice usare il comando **CTRL+S** o **fare clic con il pulsante destro del mouse > Salva** per **salvare le modifiche**.
+1. *Dopo* aver sostituito i segnaposto con l'editor di codice, usare il comando **CTRL+S** aver sostituito i segnaposto con l'editor di codice, usare il comando **Fare clic con il pulsante destro del mouse > Salva** per **salvare le modifiche** e quindi usare il comando **CTRL+Q** o **Fare clic con il pulsante destro del mouse > Esci** per chiudere l'editor di codice mantenendo aperta la riga di comando di Cloud Shell.
 
-### B. Inviare richieste al modello distribuito
+### Inviare richieste al modello distribuito
 
 A questo punto è possibile eseguire più script che inviano richieste diverse al modello distribuito. Queste interazioni generano dati che è possibile osservare in un secondo momento in Monitoraggio di Azure.
 
@@ -138,7 +148,7 @@ A questo punto è possibile eseguire più script che inviano richieste diverse a
 
     Il modello genererà una risposta, che verrà acquisita con Application Insights per un'ulteriore analisi. È possibile variare le richieste per esplorare i relativi effetti.
 
-1. **Aprire ed esaminare lo script**, in cui la richiesta indica al modello di **rispondere solo con una frase e un elenco**:
+1. **Aprire ed esaminare lo script** in cui la richiesta indica al modello di **rispondere solo con una frase e un elenco**:
 
     ```
    code short-prompt.py
@@ -178,22 +188,22 @@ Ora, dopo aver interagito con il modello, è possibile esaminare i dati in Monit
 
 > **Nota**: potrebbero essere necessari alcuni minuti affinché i dati di monitoraggio vengano mostrati in Monitoraggio di Azure.
 
-## 4. Visualizzare il monitoraggio di dati in Monitoraggio di Azure
+## Visualizzare i dati di monitoraggio in Monitoraggio di Azure
 
 Per visualizzare i dati raccolti dalle interazioni con il modello, accedere al dashboard che collega a una cartella di lavoro in Monitoraggio di Azure.
 
-### R. Passare a Monitoraggio di Azure dal portale Fonderia Azure AI
+### Passare a Monitoraggio di Azure dal portale Fonderia Azure AI
 
 1. Passare alla scheda nel browser con il **portale Fonderia Azure AI** aperto.
 1. Usare il menu a sinistra, selezionare **Traccia**.
 1. Selezionare il collegamento nella parte superiore, che indica **Eseguire il checkout delle informazioni dettagliate per il dashboard delle applicazioni di IA generativa**. Il collegamento aprirà Monitoraggio di Azure in una nuova scheda.
 1. Esaminare la **panoramica** fornendo dati riepilogati delle interazioni con il modello distribuito.
 
-## 5. Interpretare le metriche di monitoraggio in Monitoraggio di Azure
+## Interpretare le metriche di monitoraggio in Monitoraggio di Azure
 
 Ora è il momento di analizzare i dati e iniziare a interpretare cosa dicono.
 
-### R. Esaminare l'utilizzo dei token
+### Esaminare l'utilizzo dei token
 
 Concentrarsi prima sulla sezione relativa **all'utilizzo dei token** ed esaminare le metriche seguenti:
 
@@ -213,7 +223,7 @@ Concentrarsi prima sulla sezione relativa **all'utilizzo dei token** ed esaminar
 
 > Utile per analizzare la velocità effettiva e comprendere il costo medio per chiamata.
 
-### B. Confrontare le singole richieste
+### Confrontare le singole richieste
 
 Scorrere verso il basso per trovare gli **intervalli di IA generativa**, visualizzati come tabella in cui ogni richiesta viene rappresentata come una nuova riga di dati. Esaminare e confrontare il contenuto delle colonne seguenti:
 
@@ -237,7 +247,7 @@ Scorrere verso il basso per trovare gli **intervalli di IA generativa**, visuali
 
 > Usarlo per valutare il livello di dettaglio, la pertinenza e la coerenza. In particolare in relazione ai conteggi dei token e alla durata.
 
-## 6. (FACOLTATIVO) Creare un avviso
+## (FACOLTATIVO) Creare un avviso
 
 Se si dispone di tempo aggiuntivo, provare a configurare un avviso per notificare quando la latenza del modello supera una determinata soglia. Questo è un esercizio progettato per sfidare l'utente, il che significa che le istruzioni sono intenzionalmente meno dettagliate.
 

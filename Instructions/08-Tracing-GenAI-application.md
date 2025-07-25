@@ -1,9 +1,10 @@
 ---
 lab:
-  title: Monitorare l'applicazione di IA generativa
+  title: Analizzare ed eseguire il debug dell'applicazione di intelligenza artificiale generativa con la traccia
+  description: Informazioni su come eseguire il debug dell'applicazione di IA generativa tracciandone il flusso di lavoro dall'input dell'utente alla risposta del modello e alla fase di post-elaborazione.
 ---
 
-# Monitorare l'applicazione di IA generativa
+# Analizzare ed eseguire il debug dell'applicazione di intelligenza artificiale generativa con la traccia
 
 Questo esercizio richiede circa **30** minuti.
 
@@ -11,9 +12,11 @@ Questo esercizio richiede circa **30** minuti.
 
 ## Introduzione
 
-In questo esercizio, viene abilitato il monitoraggio per un'app di completamento della chat e vengono visualizzate le prestazioni in Monitoraggio di Azure. È possibile interagire con il modello distribuito per generare dati, visualizzare i dati generati tramite le informazioni dettagliate della dashboard delle applicazioni di IA generativa e configurare avvisi per ottimizzare la distribuzione del modello.
+In questo esercizio verrà eseguito un assistente di IA generativa a più passaggi, che suggerisce escursioni a piedi e consiglia attrezzature per l'outdoor. Verrà usata la funzione di traccia dell'SDK di inferenza di Intelligenza artificiale di Azure per analizzare l'esecuzione dell'applicazione e identificare i punti chiave decisionali presi dal modello e dalla logica circostante.
 
-## 1. Configurare l'ambiente
+Verrà eseguita l'interazione con un modello distribuito per simulare un percorso reale dell'utente, tracciando ogni fase dell'applicazione, dall'input dell'utente alla risposta del modello fino alla post-elaborazione, visualizzando i dati di analisi in Fonderia Azure AI. Ciò consentirà di comprendere come la traccia migliora l'osservabilità, semplifica il debug e supporta l'ottimizzazione delle prestazioni delle applicazioni di IA generativa.
+
+## Configurare l'ambiente
 
 Per completare le attività di questo esercizio, è necessario:
 
@@ -22,52 +25,62 @@ Per completare le attività di questo esercizio, è necessario:
 - un modello distribuito (come GPT-4o),
 - una risorsa di Application Insights connessa.
 
-### R. Creare un hub e un progetto Fonderia Azure AI
+### Creare un hub e un progetto Fonderia Azure AI
 
 Per configurare rapidamente un hub e un progetto, di seguito sono disponibili istruzioni semplici per usare l'interfaccia utente del portale Fonderia Azure AI.
 
-1. Passare al portale Fonderia Azure AI: aprire [https://ai.azure.com](https://ai.azure.com).
-1. Accedere con le credenziali di Azure.
-1. Creare un progetto:
-    1. Passare a **Tutti gli hub e progetti**.
-    1. Selezionare **+ Nuovo progetto**.
-    1. Immettere un **nome di progetto**.
-    1. Quando richiesto, **creare un nuovo hub**.
-    1. Personalizzare l'hub:
-        1. Scegliere **sottoscrizione**, **gruppo di risorse**, **posizione**, ecc.
-        1. Connettere una nuova risorsa **Servizi di Azure AI** (ignorare AI Search).
-    1. Rivedere e selezionare **Crea**.
-1. **Attendere il completamento della distribuzione** (~ 1-2 minuti).
+1. In un Web browser, aprire il [Portale Fonderia Azure AI](https://ai.azure.com) su `https://ai.azure.com` e accedere usando le credenziali di Azure.
+1. Nella home page, selezionare **+ Crea progetto**.
+1. Nella procedura guidata **Crea un progetto**, immettere un nome appropriato per il progetto. Se viene suggerito un hub esistente, selezionare l'opzione per crearne uno nuovo. Successivamente, esaminare le risorse Azure che verranno create automaticamente per supportare l'hub e il progetto.
+1. Selezionare **Personalizza** e specificare le impostazioni seguenti per l'hub:
+    - **Nome hub**: *un nome valido per l'hub*
+    - **Sottoscrizione**: *la sottoscrizione di Azure usata*
+    - **Gruppo di risorse**: *creare o selezionare un gruppo di risorse*
+    - **Posizione**: selezionare **Informazioni su come scegliere** e quindi selezionare **gpt-4o** nella finestra Helper posizione e usare l'area consigliata\*
+    - **Connettere Servizi di Azure AI o Azure OpenAI**: *Creare una nuova risorsa di Servizi di AI*
+    - **Connettere Azure AI Search**: ignorare la connessione
 
-### B. Distribuire un modello
+    > \* Le risorse Azure OpenAI sono limitate da quote di modelli regionali. In caso di superamento di un limite di quota più avanti nell'esercizio, potrebbe essere necessario creare un'altra risorsa in un'area diversa.
+
+1. Selezionare **Avanti** per esaminare la configurazione. Quindi selezionare **Crea** e attendere il completamento del processo.
+
+### Distribuire un modello
 
 Per generare dati che è possibile monitorare, è prima necessario distribuire un modello e interagire con esso. Nelle istruzioni viene chiesto di distribuire un modello GPT-4o, ma **è possibile usare qualsiasi modello** dalla raccolta Servizio OpenAI di Azure disponibile.
 
 1. Utilizzare il menu a sinistra, nella sezione **Risorse personali**, selezionare la pagina **Modelli + endpoint**.
-1. Distribuire un **modello di base** e scegliere **gpt-4o**.
-1. **Personalizzare i dettagli di distribuzione**.
-1. Impostare la **capacità** su **5.000 token al minuto (TPM)**.
+1. Nel menu **+ Distribuisci modello** selezionare **Distribuisci modello di base**.
+1. Selezionare il modello **gpt-4o** nell'elenco e distribuirlo con le impostazioni seguenti selezionando **Personalizza** nei dettagli della distribuzione:
+    - **Nome distribuzione**: *nome univoco per la distribuzione del modello*
+    - **Tipo di distribuzione**: Standard
+    - **Aggiornamento automatico della versione**: abilitato
+    - **Versione del modello**: *selezionare la versione più recente disponibile*
+    - **Risorsa di intelligenza artificiale connessa**: *selezionare la connessione alla risorsa Azure OpenAI*
+    - **Limite di velocità dei token al minuto (migliaia)**: 5K
+    - **Filtro contenuto**: predefinitoV2
+    - **Abilitare la quota dinamica**: disabilitato
 
-L'hub e il progetto sono pronti, con tutte le risorse di Azure necessarie di cui viene eseguito automaticamente il provisioning.
+    > **Nota**: la riduzione del TPM consente di evitare l'eccessivo utilizzo della quota disponibile nella sottoscrizione in uso. 5.000 token al minuto dovrebbero essere sufficienti per i dati usati in questo esercizio. Se la quota disponibile è inferiore a questa, sarà possibile completare l'esercizio, ma potrebbero verificarsi errori se viene superato il limite di velocità.
 
-### C. Connetti Application Insights
+1. Attendere il completamento della distribuzione.
 
-Connettere Application Insights al progetto in Fonderia Azure AI per avviare il monitoraggio dei dati raccolti.
+### Connetti Application Insights
 
-1. Aprire il progetto nel portale Fonderia Azure AI.
+Connettere Application Insights al progetto in Fonderia Azure AI per iniziare a raccogliere i dati da analizzare.
+
 1. Usare il menu a sinistra e selezionare la pagina **Traccia**.
 1. **Creare una nuova** risorsa di Application Insights per connettersi all'app.
-1. Immettere un **nome della risorsa di Application Insights**.
+1. Immettere un nome di risorsa di Application Insights e selezionare **Crea**.
 
 Application Insights è ora connesso al progetto e verrà iniziata l'analisi dei dati raccolti.
 
-## 2. Interagire con un modello distribuito
+## Eseguire un'app di IA generativa con Cloud Shell
 
-Interagire con il modello distribuito a livello di codice configurando una connessione al progetto Fonderia Azure AI usando Azure Cloud Shell. In questo modo sarà possibile inviare una richiesta al modello e generare i dati di monitoraggio.
+Verrà effettuata la connessione al progetto Fonderia Azure AI da Azure Cloud Shell e verrà eseguita l'interazione a livello di codice con un modello distribuito come parte di un'app di IA generativa.
 
-### R. Connettersi con a un modello tramite Cloud Shell
+### Interagire con un modello distribuito
 
-Iniziare recuperando le informazioni necessarie da autenticare per interagire con il modello. Accedere quindi ad Azure Cloud Shell e aggiornare la configurazione per inviare le richieste fornite al modello distribuito.
+Iniziare recuperando le informazioni necessarie da autenticare per interagire con il modello distribuito. Quindi, sarà possibile accedere ad Azure Cloud Shell e aggiornare il codice dell'app di IA generativa.
 
 1. Nel Portale Fonderia Azure AI visualizzare la pagina **Panoramica** per il progetto.
 1. Nell'area **Dettagli di progetto** prendere nota della **stringa di connessione del progetto**.
@@ -82,7 +95,7 @@ Iniziare recuperando le informazioni necessarie da autenticare per interagire co
 1. Nel riquadro Cloud Shell immettere ed eseguire il comando seguente:
 
     ```
-    rm -r mslearn-ai-foundry -f
+    rm -r mslearn-genaiops -f
     git clone https://github.com/microsoftlearning/mslearn-genaiops mslearn-genaiops
     ```
 
@@ -91,7 +104,7 @@ Iniziare recuperando le informazioni necessarie da autenticare per interagire co
 1. Dopo aver clonato il repository, passare alla cartella contenente i file di codice dell'applicazione:  
 
     ```
-   cd mslearn-ai-foundry/Files/07
+   cd mslearn-genaiops/Files/08
     ```
 
 1. Nel riquadro della riga di comando di Cloud Shell, immettere il comando seguente per installare le librerie che verranno utilizzate:
@@ -115,134 +128,270 @@ Iniziare recuperando le informazioni necessarie da autenticare per interagire co
     1. Sostituire il segnaposto **your_project_connection_string** con la stringa di connessione del progetto (copiata dalla pagina **Panoramica** del progetto nel portale Fonderia Azure AI).
     1. Sostituire il segnaposto **your_model_deployment** con il nome assegnato alla distribuzione modello GPT-4o (per impostazione predefinita `gpt-4o`).
 
-1. *Dopo* aver sostituito i segnaposto, nell'editor di codice usare il comando **CTRL+S** o **fare clic con il pulsante destro del mouse > Salva** per **salvare le modifiche**.
+1. *Dopo* aver sostituito i segnaposto con l'editor di codice, usare il comando **CTRL+S** aver sostituito i segnaposto con l'editor di codice, usare il comando **Fare clic con il pulsante destro del mouse > Salva** per **salvare le modifiche** e quindi usare il comando **CTRL+Q** o **Fare clic con il pulsante destro del mouse > Esci** per chiudere l'editor di codice mantenendo aperta la riga di comando di Cloud Shell.
 
-### B. Inviare richieste al modello distribuito
+### Aggiornare il codice per l'app di IA generativa
 
-A questo punto è possibile eseguire più script che inviano richieste diverse al modello distribuito. Queste interazioni generano dati che è possibile osservare in un secondo momento in Monitoraggio di Azure.
+Ora che l'ambiente e il file .env sono stati configurati, è il momento di preparare lo script dell'assistente IA per l'esecuzione. Oltre a connettersi con un progetto di IA e ad abilitare Application Insights, è necessario:
 
-1. Eseguire il comando seguente per **visualizzare il primo script** fornito:
+- Interagire con il modello distribuito.
+- Definire la funzione per specificare il prompt.
+- Definire il flusso principale che chiama tutte le funzioni.
+
+Queste tre parti verranno aggiunte a uno script iniziale.
+
+1. Eseguire il comando seguente per **aprire lo script** fornito:
 
     ```
    code start-prompt.py
     ```
 
+    Sarà possibile notare che diverse righe chiave sono state lasciate vuote o contrassegnate da # Commenti vuoti. Il compito consiste nel completare lo script copiando e incollando le righe corrette di seguito nelle posizioni appropriate.
+
+1. Nello script, individuare **# Function to call the model and handle tracing**.
+1. Sotto questo commento, incollare il codice seguente:
+
+    ```
+   def call_model(system_prompt, user_prompt, span_name):
+        with tracer.start_as_current_span(span_name) as span:
+            span.set_attribute("session.id", SESSION_ID)
+            span.set_attribute("prompt.user", user_prompt)
+            start_time = time.time()
+    
+            response = chat_client.complete(
+                model=model_name,
+                messages=[SystemMessage(system_prompt), UserMessage(user_prompt)]
+            )
+    
+            duration = time.time() - start_time
+            output = response.choices[0].message.content
+            span.set_attribute("response.time", duration)
+            span.set_attribute("response.tokens", len(output.split()))
+            return output
+    ```
+
+1. Nello script, individuare **# Function to recommend a hike based on user preferences**.
+1. Sotto questo commento, incollare il codice seguente:
+
+    ```
+   def recommend_hike(preferences):
+        with tracer.start_as_current_span("recommend_hike") as span:
+            prompt = f"""
+            Recommend a named hiking trail based on the following user preferences.
+            Provide only the name of the trail and a one-sentence summary.
+            Preferences: {preferences}
+            """
+            response = call_model(
+                "You are an expert hiking trail recommender.",
+                prompt,
+                "recommend_model_call"
+            )
+            span.set_attribute("hike_recommendation", response.strip())
+            return response.strip()
+    ```
+
+1. Nello script, individuare **# ---- Main Flow ----**.
+1. Sotto questo commento, incollare il codice seguente:
+
+    ```
+   if __name__ == "__main__":
+       with tracer.start_as_current_span("trail_guide_session") as session_span:
+           session_span.set_attribute("session.id", SESSION_ID)
+           print("\n--- Trail Guide AI Assistant ---")
+           preferences = input("Tell me what kind of hike you're looking for (location, difficulty, scenery):\n> ")
+
+           hike = recommend_hike(preferences)
+           print(f"\n✅ Recommended Hike: {hike}")
+
+           # Run profile function
+
+
+           # Run match product function
+
+
+           print(f"\n🔍 Trace ID available in Application Insights for session: {SESSION_ID}")
+    ```
+
+1. **Salvare le modifiche** apportate nello script.
 1. Nel riquadro della riga di comando di Cloud Shell, sotto l'editor di codice, immettere il seguente comando per **eseguire l'applicazione**:
 
     ```
    python start-prompt.py
     ```
 
-    Il modello genererà una risposta, che verrà acquisita con Application Insights per un'ulteriore analisi. È possibile variare le richieste per esplorare i relativi effetti.
-
-1. **Aprire ed esaminare lo script**, in cui la richiesta indica al modello di **rispondere solo con una frase e un elenco**:
+1. Fornire una descrizione del tipo di escursione che si sta cercando, ad esempio:
 
     ```
-   code short-prompt.py
+   A one-day hike in the mountains
     ```
 
-1. **Eseguire lo script** immettendo il comando seguente nella riga di comando:
-
-    ```
-   python short-prompt.py
-    ```
-
-1. Lo script successivo ha un obiettivo simile, ma include le istruzioni per l'output nel **messaggio di sistema** anziché nel messaggio dell'utente:
-
-    ```
-   code system-prompt.py
-    ```
-
-1. **Eseguire lo script** immettendo il comando seguente nella riga di comando:
-
-    ```
-   python system-prompt.py
-    ```
-
-1. Infine, provare ad attivare un errore eseguendo una richiesta con **troppi token**:
-
-    ```
-   code error-prompt.py
-    ```
-
-1. **Eseguire lo script** immettendo il comando seguente nella riga di comando. Notare che è molto **probabile che si verifichi un errore!**
-
-    ```
-   python error-prompt.py
-    ```
-
-Ora, dopo aver interagito con il modello, è possibile esaminare i dati in Monitoraggio di Azure.
+    Il modello genererà una risposta, che verrà acquisita con Application Insights. È possibile visualizzare le tracce nel **portale Fonderia Azure AI**.
 
 > **Nota**: potrebbero essere necessari alcuni minuti affinché i dati di monitoraggio vengano mostrati in Monitoraggio di Azure.
 
-## 4. Visualizzare il monitoraggio di dati in Monitoraggio di Azure
+## Visualizzare i dati delle tracce nel portale Fonderia Azure AI
 
-Per visualizzare i dati raccolti dalle interazioni con il modello, accedere al dashboard che collega a una cartella di lavoro in Monitoraggio di Azure.
+Dopo aver eseguito lo script, è stata acquisita una traccia dell'esecuzione dell'applicazione di IA. A questo punto, verrà esaminata usando Application Insights in Fonderia Azure AI.
 
-### R. Passare a Monitoraggio di Azure dal portale Fonderia Azure AI
+> **Nota:** in seguito, il codice verrà eseguito nuovamente e le tracce verranno visualizzate di nuovo nel portale Fonderia Azure AI. Per prima cosa, è necessario capire dove trovare le tracce per visualizzarle.
 
+### Passare al portale Fonderia Azure AI
+
+1. **Tenere aperto Cloud Shell**. Sarà necessario tornare a questa sezione per aggiornare il codice ed eseguirlo di nuovo.
 1. Passare alla scheda nel browser con il **portale Fonderia Azure AI** aperto.
 1. Usare il menu a sinistra, selezionare **Traccia**.
-1. Selezionare il collegamento nella parte superiore, che indica **Eseguire il checkout delle informazioni dettagliate per il dashboard delle applicazioni di IA generativa**. Il collegamento aprirà Monitoraggio di Azure in una nuova scheda.
-1. Esaminare la **panoramica** fornendo dati riepilogati delle interazioni con il modello distribuito.
+1. *Se* non vengono visualizzati dati, **aggiornare** la vista.
+1. Selezionare la traccia **train_guide_session** per aprire una nuova finestra che mostra altri dettagli.
 
-## 5. Interpretare le metriche di monitoraggio in Monitoraggio di Azure
+### Esaminare la traccia
 
-Ora è il momento di analizzare i dati e iniziare a interpretare cosa dicono.
+Questa vista mostra la traccia di una sessione completa di Trail Guide AI Assistant.
 
-### R. Esaminare l'utilizzo dei token
+- **Intervallo di primo livello**: trail_guide_session è l'intervallo padre. Rappresenta l'intera esecuzione dell'assistente dall'inizio alla fine.
 
-Concentrarsi prima sulla sezione relativa **all'utilizzo dei token** ed esaminare le metriche seguenti:
+- **Intervalli figlio annidati**: ogni riga rientrata rappresenta un'operazione annidata. Informazioni:
 
-- **Token di richiesta**: numero totale di token usati nell'input (le richieste inviate) in tutte le chiamate di modello.
+    - **recommend_hike** acquisisce la logica con cui viene decisa un'escursione.
+    - **recommend_model_call** è l'intervallo creato da call_model() all'interno di recommend_hike.
+    - **chat gpt-4o** viene automaticamente instrumentato dall'SDK di inferenza di Azure per intelligenza artificiale per mostrare l'effettiva interazione con LLM.
 
-> Pensare a questo come al *costo di porre* al modello una domanda.
+1. È possibile fare clic su qualsiasi intervallo per visualizzare:
 
-- **Token di completamento**: numero di token restituiti dal modello come output, essenzialmente la lunghezza delle risposte.
+    1. La durata.
+    1. I relativi attributi, ad esempio il prompt dell'utente, i token usati, il tempo di risposta.
+    1. Eventuali errori o dati personalizzati associati a **span.set_attribute(...)**.
 
-> I token di completamento generati spesso rappresentano la maggior parte dell'utilizzo e dei costi dei token, soprattutto per le risposte lunghe o dettagliate.
+## Aggiungere altre funzioni al codice
 
-- **Totale token**: i token di richiesta combinati e i token di completamento.
+1. Passare alla scheda nel browser con il **portale di Azure** aperto.
+1. Eseguire il seguente comando seguente per **aprire nuovamente lo script:**
 
-> Metrica più importante per la fatturazione e le prestazioni, perché determina la latenza e il costo.
+    ```
+   code start-prompt.py
+    ```
 
-- **Chiamate totali**: numero di richieste di inferenza separate, ovvero quante volte è stato chiamato il modello.
+1. Nello script, individuare **# Function to generate a trip profile for the recommended hike**.
+1. Sotto questo commento, incollare il codice seguente:
 
-> Utile per analizzare la velocità effettiva e comprendere il costo medio per chiamata.
+    ```
+   def generate_trip_profile(hike_name):
+       with tracer.start_as_current_span("trip_profile_generation") as span:
+           prompt = f"""
+           Hike: {hike_name}
+           Respond ONLY with a valid JSON object and nothing else.
+           Do not include any intro text, commentary, or markdown formatting.
+           Format: {{ "trailType": ..., "typicalWeather": ..., "recommendedGear": [ ... ] }}
+           """
+           response = call_model(
+               "You are an AI assistant that returns structured hiking trip data in JSON format.",
+               prompt,
+               "trip_profile_model_call"
+           )
+           print("🔍 Raw model response:", response)
+           try:
+               profile = json.loads(response)
+               span.set_attribute("profile.success", True)
+               return profile
+           except json.JSONDecodeError as e:
+               print("❌ JSON decode error:", e)
+               span.set_attribute("profile.success", False)
+               return {}
+    ```
 
-### B. Confrontare le singole richieste
+1. Nello script, individuare **# Function to match recommended gear with products in the catalog**.
+1. Sotto questo commento, incollare il codice seguente:
 
-Scorrere verso il basso per trovare gli **intervalli di IA generativa**, visualizzati come tabella in cui ogni richiesta viene rappresentata come una nuova riga di dati. Esaminare e confrontare il contenuto delle colonne seguenti:
+    ```
+   def match_products(recommended_gear):
+       with tracer.start_as_current_span("product_matching") as span:
+           matched = []
+           for gear_item in recommended_gear:
+               for product in mock_product_catalog:
+                   if any(word in product.lower() for word in gear_item.lower().split()):
+                       matched.append(product)
+                       break
+           span.set_attribute("matched.count", len(matched))
+           return matched
+    ```
 
-- **Stato**: indica se una chiamata di modello è riuscita o meno.
+1. Nello script, individuare **# Run profile function**.
+1. Sotto e **allineato a** questo commento, incollare il seguente codice:
 
-> Usare questa opzione per identificare le richieste problematiche o gli errori di configurazione. L'ultima richiesta non è probabilmente riuscita perché era troppo lunga.
+    ```
+           profile = generate_trip_profile(hike)
+           if not profile:
+               print("Failed to generate trip profile. Please check Application Insights for trace.")
+               exit(1)
 
-- **Durata**: indica quanto tempo il modello ha impiegato per rispondere, in millisecondi.
+           print(f"\n📋 Trip Profile for {hike}:")
+           print(json.dumps(profile, indent=2))
+    ```
 
-> Confrontare le righe per esplorare quali criteri di richiesta generano tempi di elaborazione più lunghi.
+1. Nello script, individuare **# Run match product function**.
+1. Sotto e **allineato a** questo commento, incollare il seguente codice:
 
-- **Input**: mostra il messaggio utente inviato al modello.
+    ```
+           matched = match_products(profile.get("recommendedGear", []))
+           print("\n🛒 Recommended Products from Lakeshore Retail:")
+           print("\n".join(matched))
+    ```
 
-> Utilizzare questa colonna per valutare le formulazioni delle richieste efficienti o problematiche.
+1. **Salvare le modifiche** apportate nello script.
+1. Nel riquadro della riga di comando di Cloud Shell, sotto l'editor di codice, immettere il seguente comando per **eseguire l'applicazione**:
 
-- **Sistema**: mostra il messaggio di sistema usato nella richiesta (se presente).
+    ```
+   python start-prompt.py
+    ```
 
-> Confrontare le voci per valutare l'impatto dell'uso o della modifica dei messaggi di sistema.
+1. Fornire una descrizione del tipo di escursione che si sta cercando, ad esempio:
 
-- **Output**: contiene la risposta del modello.
+    ```
+   I want to go for a multi-day adventure along the beach
+    ```
 
-> Usarlo per valutare il livello di dettaglio, la pertinenza e la coerenza. In particolare in relazione ai conteggi dei token e alla durata.
+<br>
+<details>
+<summary><b>Script della soluzione</b>: Nel caso in cui il codice non funzioni.</summary><br>
+<p>Esaminando l'analisi del modello LLM per la funzione generate_trip_profile, è possibile notare che la risposta dell'assistente include i backtick e il testo JSON per formattare l'output come blocco di codice.
 
-## 6. (FACOLTATIVO) Creare un avviso
+Sebbene questo sia utile per la visualizzazione, può causare problemi nel codice, poiché l'output non risulta più essere un JSON valido. Ciò comporta un errore di analisi durante l'ulteriore elaborazione.
 
-Se si dispone di tempo aggiuntivo, provare a configurare un avviso per notificare quando la latenza del modello supera una determinata soglia. Questo è un esercizio progettato per sfidare l'utente, il che significa che le istruzioni sono intenzionalmente meno dettagliate.
+L'errore è probabilmente dovuto al modo in cui l'LLM viene istruito a seguire un formato specifico per il proprio output. Includere le istruzioni direttamente nel prompt utente risulta più efficace rispetto a inserirle nel menu vocale del sistema.</p>
+</details>
 
-- In Monitoraggio di Azure, creare una **nuova regola di avviso** per il progetto e il modello Fonderia Azure AI.
-- Scegliere una metrica, ad esempio **Durata della richiesta (ms)** e definire una soglia (ad esempio, maggiore di 4000 ms).
-- Creare un **nuovo gruppo di azioni** per definire la modalità di notifica.
 
-Gli avvisi consentono di prepararsi per la produzione stabilendo il monitoraggio proattivo. Gli avvisi configurati dipendono dalle priorità del progetto e dal modo in cui il team ha deciso di misurare e mitigare i rischi.
+> **Nota**: potrebbero essere necessari alcuni minuti affinché i dati di monitoraggio vengano mostrati in Monitoraggio di Azure.
+
+### Visualizzare le nuove tracce nel portale Fonderia Azure AI
+
+1. Passare al portale Fonderia Azure AI.
+1. Verrà visualizzata una nuova traccia con lo stesso nome **trail_guide_session**. Aggiornare la vista, se necessario.
+1. Selezionare la nuova traccia per aprire la vista più dettagliata.
+1. Esaminare i nuovi intervalli figlio annidati **trip_profile_generation** e **product_matching**.
+1. Selezionare **product_matching** ed esaminare i metadati visualizzati.
+
+    Nella funzione product_matching, è stato incluso **span.set_attribute(“matched.count”, len(matched))**. Impostando l'attributo con la coppia chiave-valore **matched.count** e la lunghezza della variabile matched, questa informazione è stata aggiunta alla traccia **product_matching**. È possibile trovare questa coppia chiave-valore in **attributi** nei metadati.
+
+## (Facoltativo) Tracciare un errore
+
+Se si dispone di tempo aggiuntivo, è possibile rivedere come usare le tracce quando si verifica un errore. Verrà fornito uno script che probabilmente genererà un errore. Eseguirlo ed esaminare le tracce.
+
+Questo è un esercizio progettato per sfidare l'utente, il che significa che le istruzioni sono intenzionalmente meno dettagliate.
+
+1. In Cloud Shell, aprire lo script **error-prompt.py**. Questo script è situato nella stessa directory dello script **start-prompt.py**. Rivedere il contenuto.
+1. Eseguire lo script **error-prompt.py**. Fornire una risposta nella riga di comando quando richiesto.
+1. *Idealmente*, il messaggio di output includerà **Failed to generate trip profile** (Impossibile generare un profilo di viaggio). Controllare Application Insights per la traccia.
+1. Passare alla traccia per **trip_profile_generation** e controllare il motivo per cui si è verificato un errore.
+
+<br>
+<details>
+<summary><b>Ottenere la risposta su</b>: il motivo per cui si è verificato un errore...</summary><br>
+<p>Esaminando l'analisi del modello LLM per la funzione generate_trip_profile, è possibile notare che la risposta dell'assistente include i backtick e il testo JSON per formattare l'output come blocco di codice.
+
+Sebbene questo sia utile per la visualizzazione, può causare problemi nel codice, poiché l'output non risulta più essere un JSON valido. Ciò comporta un errore di analisi durante l'ulteriore elaborazione.
+
+L'errore è probabilmente dovuto al modo in cui l'LLM viene istruito a seguire un formato specifico per il proprio output. Includere le istruzioni direttamente nel prompt utente risulta più efficace rispetto a inserirle nel menu vocale del sistema.</p>
+</details>
 
 ## Dove trovare altri lab
 
