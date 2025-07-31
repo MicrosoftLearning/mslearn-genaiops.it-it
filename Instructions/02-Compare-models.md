@@ -107,9 +107,9 @@ L'accuratezza della metrica del benchmark viene calcolata in base ai set di dati
 
 Per sperimentare ed eseguire rapidamente l'iterazione, si userà un set di script Python in Cloud Shell.
 
-1. Nel Portale Fonderia Azure AI visualizzare la pagina **Panoramica** per il progetto.
-1. Nell'area **Dettagli di progetto** prendere nota della **stringa di connessione del progetto**.
-1. Salvare la stringa in un Blocco note. Questa stringa di connessione verrà usata per connettersi al progetto in un'applicazione client.
+1. Tornare alla scheda Portale di Azure e passare al gruppo di risorse creato in precedenza dallo script di distribuzione, quindi selezionare la risorsa **Fonderia Azure AI**.
+1. Nella pagina **Panoramica **della risorsa selezionare **Fare clic qui per visualizzare gli endpoint** e copiare l'endpoint dell'API Fonderia AI.
+1. Salvare l'endpoint in un Blocco note. Verrà usato per connettersi al progetto in un'applicazione client.
 1. Tornare nella scheda Portale di Azure e aprire Cloud Shell se è stato chiuso prima, quindi eseguire il comando seguente per passare alla cartella con i file di codice usati in questo esercizio:
 
      ```powershell
@@ -132,7 +132,7 @@ Per sperimentare ed eseguire rapidamente l'iterazione, si userà un set di scrip
 
     Il file viene aperto in un editor di codice.
 
-1. Nel file di codice sostituire il segnaposto **your_project_connection_string** con la stringa di connessione del progetto, copiata dalla pagina **Panoramica** del progetto nel Portale Fonderia Azure AI. Come si può notare, il primo e il secondo modello usati nell'esercizio sono rispettivamente **gpt-4o** e **gpt-4o-mini**.
+1. Nel file di codice sostituire il segnaposto **your_project_endpoint** con l'endpoint del progetto copiato in precedenza. Come si può notare, il primo e il secondo modello usati nell'esercizio sono rispettivamente **gpt-4o** e **gpt-4o-mini**.
 1. *Dopo* aver sostituito i segnaposto con l'editor di codice, usare il comando **CTRL+S** o **Fare clic con il pulsante destro del mouse > Salva** per salvare le modifiche e quindi usare il comando **CTRL+Q** o **Fare clic con il pulsante destro del mouse > Esci** per chiudere l'editor di codice mantenendo aperta la riga di comando di Cloud Shell.
 
 ## Inviare richieste ai modelli distribuiti
@@ -147,7 +147,18 @@ A questo punto è possibile eseguire più script che inviano richieste diverse a
 
 Lo script codificherà l'immagine usata in questo esercizio in un URL dati. Questo URL verrà usato per incorporare l'immagine direttamente nella richiesta di completamento della chat insieme alla prima richiesta di testo. Lo script restituirà successivamente la risposta del modello e la aggiungerà alla cronologia della chat, quindi invierà una seconda richiesta. La seconda richiesta viene inviata e archiviata allo scopo di rendere più significative le metriche osservate più avanti, ma è possibile rimuovere il commento dalla sezione facoltativa del codice per avere anche la seconda risposta come output.
 
-1. Nel riquadro della riga di comando di Cloud Shell sotto l'editor di codice immettere il comando seguente per eseguire il **primo** script:
+1. Nel riquadro della riga di comando di Cloud Shell immettere il comando seguente per accedere ad Azure.
+
+    ```
+   az login
+    ```
+
+    **<font color="red">È necessario accedere ad Azure, anche se la sessione di Cloud Shell è già autenticata.</font>**
+
+    > **Nota**: nella maggior parte degli scenari, il semplice uso di *az login* sarà sufficiente. Tuttavia, in caso di sottoscrizioni in più tenant, potrebbe essere necessario specificare il tenant usando il parametro *--tenant*. Per dettagli, visualizzare [Accedere ad Azure in modo interattivo usando l'interfaccia della riga di comando di Azure](https://learn.microsoft.com/cli/azure/authenticate-azure-cli-interactively).
+    
+1. Quando richiesto, seguire le istruzioni per aprire la pagina di accesso in una nuova scheda e immettere il codice di autenticazione fornito e le credenziali di Azure. Completare quindi il processo di accesso nella riga di comando, selezionando la sottoscrizione contenente l'hub di Fonderia Azure AI, se richiesto.
+1. Dopo aver eseguito l'accesso, immettere il comando seguente per eseguire l'applicazione:
 
     ```powershell
    python model1.py
@@ -169,7 +180,7 @@ Lo script codificherà l'immagine usata in questo esercizio in un URL dati. Ques
 
 Si eseguirà infine un terzo script che traccia il numero di token elaborati nel tempo per ogni modello. Questi dati vengono ottenuti da Monitoraggio di Azure.
 
-1. Prima di eseguire l'ultimo script, è necessario copiare l'ID della risorsa per i Servizi di Azure AI dal portale di Azure. Passare alla pagina di panoramica della risorsa di Servizi di Azure AI e selezionare **Visualizzazione JSON**. Copiare l'ID della risorsa e sostituire il segnaposto `your_resource_id` nel file di codice:
+1. Prima di eseguire l'ultimo script, è necessario copiare l'ID della risorsa per la risorsa Fonderia Azure AI dal portale di Azure. Passare alla pagina di panoramica della risorsa Fonderia Azure AI e selezionare **Visualizzazione JSON**. Copiare l'ID della risorsa e sostituire il segnaposto `your_resource_id` nel file di codice:
 
     ```powershell
    code plot.py

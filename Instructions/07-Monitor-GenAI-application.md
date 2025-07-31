@@ -18,49 +18,30 @@ In questo esercizio, viene abilitato il monitoraggio per un'app di completamento
 
 Per completare le attività di questo esercizio, è necessario:
 
-- un hub di Fonderia Azure AI,
 - un progetto Fonderia Azure AI
 - un modello distribuito (come GPT-4o),
 - una risorsa di Application Insights connessa.
 
-### Creare un hub e un progetto Fonderia Azure AI
+### Distribuire un modello nel progetto Fonderia Azure AI
 
-Per configurare rapidamente un hub e un progetto, di seguito sono disponibili istruzioni semplici per usare l'interfaccia utente del portale Fonderia Azure AI.
+Per configurare rapidamente un progetto di Fonderia Azure AI, di seguito sono disponibili istruzioni semplici per usare l'interfaccia utente del Portale Fonderia Azure AI.
 
 1. In un Web browser, aprire il [Portale Fonderia Azure AI](https://ai.azure.com) su `https://ai.azure.com` e accedere usando le credenziali di Azure.
-1. Nella home page, selezionare **+ Crea progetto**.
-1. Nella procedura guidata **Crea un progetto**, immettere un nome appropriato per il progetto. Se viene suggerito un hub esistente, selezionare l'opzione per crearne uno nuovo. Successivamente, esaminare le risorse Azure che verranno create automaticamente per supportare l'hub e il progetto.
-1. Selezionare **Personalizza** e specificare le impostazioni seguenti per l'hub:
-    - **Nome hub**: *un nome valido per l'hub*
+1. Nella home page, nella sezione **Esplora modelli e funzionalità**, cercare il modello `gpt-4o`, che verrà usato nel progetto.
+1. Nei risultati della ricerca, selezionare il modello **gpt-4o** per visualizzarne i dettagli e quindi nella parte superiore della pagina selezionare **Usa questo modello**.
+1. Quando viene richiesto di creare un progetto, immettere un nome valido per il progetto ed espandere **Opzioni avanzate**.
+1. Selezionare **Personalizza** e specificare le impostazioni seguenti per il progetto:
+    - **Risorsa di Fonderia Azure AI**: *nome valido per la risorsa di Fonderia Azure AI*
     - **Sottoscrizione**: *la sottoscrizione di Azure usata*
     - **Gruppo di risorse**: *creare o selezionare un gruppo di risorse*
-    - **Posizione**: selezionare **Informazioni su come scegliere** e quindi selezionare **gpt-4o** nella finestra Helper posizione e usare l'area consigliata\*
-    - **Connettere Servizi di Azure AI o Azure OpenAI**: *Creare una nuova risorsa di Servizi di AI*
-    - **Connettere Azure AI Search**: ignorare la connessione
+    - **Area geografica**: *selezionare qualsiasi **località supportata per i servizi di intelligenza artificiale**\*
 
-    > \* Le risorse Azure OpenAI sono limitate da quote di modelli regionali. In caso di superamento di un limite di quota più avanti nell'esercizio, potrebbe essere necessario creare un'altra risorsa in un'area diversa.
+    > \* Alcune risorse Azure AI sono limitate da quote di modelli regionali. In caso di superamento di un limite di quota più avanti nell'esercizio, potrebbe essere necessario creare un'altra risorsa in un'area diversa.
 
-1. Selezionare **Avanti** per esaminare la configurazione. Quindi selezionare **Crea** e attendere il completamento del processo.
-
-### Distribuire un modello
-
-Per generare dati che è possibile monitorare, è prima necessario distribuire un modello e interagire con esso. Nelle istruzioni viene chiesto di distribuire un modello GPT-4o, ma **è possibile usare qualsiasi modello** dalla raccolta Servizio OpenAI di Azure disponibile.
-
-1. Utilizzare il menu a sinistra, nella sezione **Risorse personali**, selezionare la pagina **Modelli + endpoint**.
-1. Nel menu **+ Distribuisci modello** selezionare **Distribuisci modello di base**.
-1. Selezionare il modello **gpt-4o** nell'elenco e distribuirlo con le impostazioni seguenti selezionando **Personalizza** nei dettagli della distribuzione:
-    - **Nome distribuzione**: *nome univoco per la distribuzione del modello*
-    - **Tipo di distribuzione**: Standard
-    - **Aggiornamento automatico della versione**: abilitato
-    - **Versione del modello**: *selezionare la versione più recente disponibile*
-    - **Risorsa di intelligenza artificiale connessa**: *selezionare la connessione alla risorsa Azure OpenAI*
-    - **Limite di velocità dei token al minuto (migliaia)**: 1.000
-    - **Filtro contenuto**: predefinitoV2
-    - **Abilitare la quota dinamica**: disabilitato
-
-    > **Nota**: la riduzione del TPM consente di evitare l'eccessivo utilizzo della quota disponibile nella sottoscrizione in uso. 1.000 token al minuto dovrebbero essere sufficienti per i dati usati in questo esercizio. Se la quota disponibile è inferiore a questa, sarà possibile completare l'esercizio, ma potrebbero verificarsi errori se viene superato il limite di velocità.
-
-1. Attendere il completamento della distribuzione.
+1. Selezionare **Crea** e attendere la creazione del progetto, inclusa la distribuzione del modello gpt-4 selezionato.
+1. Nel riquadro di spostamento a sinistra selezionare **Panoramica** per visualizzare la pagina principale del progetto,.
+1. Nell'area **Endpoint e chiavi** assicurarsi che sia selezionata la libreria di **Fonderia Azure AI** e visualizzare l'**Endpoint del progetto di Fonderia Azure AI**.
+1. **Salvare** l'endpoint in un Blocco note. Questo endpoint verrà usato per connettersi al progetto in un'applicazione client.
 
 ### Connetti Application Insights
 
@@ -80,9 +61,6 @@ Interagire con il modello distribuito a livello di codice configurando una conne
 
 Iniziare recuperando le informazioni necessarie da autenticare per interagire con il modello. Accedere quindi ad Azure Cloud Shell e aggiornare la configurazione per inviare le richieste fornite al modello distribuito.
 
-1. Nel Portale Fonderia Azure AI visualizzare la pagina **Panoramica** per il progetto.
-1. Nell'area **Dettagli di progetto** prendere nota della **stringa di connessione del progetto**.
-1. **Salvare** la stringa in un Blocco note. Questa stringa di connessione verrà usata per connettersi al progetto in un'applicazione client.
 1. Aprire una nuova scheda del browser (mantenendo aperto il Portale Fonderia Azure AI nella scheda esistente).
 1. In una nuova scheda, passare al [portale di Azure](https://portal.azure.com) su `https://portal.azure.com`, accedendo con le credenziali di Azure se richiesto.
 1. Usare il pulsante **[\>_]** a destra della barra di ricerca, nella parte superiore della pagina, per aprire una nuova sessione di Cloud Shell nel portale di Azure selezionando un ambiente ***PowerShell*** senza archiviazione nell'abbonamento.
@@ -112,7 +90,7 @@ Iniziare recuperando le informazioni necessarie da autenticare per interagire co
     ```
    python -m venv labenv
    ./labenv/bin/Activate.ps1
-   pip install python-dotenv azure-identity azure-ai-projects azure-ai-inference azure-monitor-opentelemetry
+   pip install python-dotenv openai azure-identity azure-ai-projects azure-ai-inference azure-monitor-opentelemetry
     ```
 
 1. Immettere il comando seguente per aprire il file di configurazione fornito:
@@ -125,7 +103,7 @@ Iniziare recuperando le informazioni necessarie da autenticare per interagire co
 
 1. Nel file di codice:
 
-    1. Sostituire il segnaposto **your_project_connection_string** con la stringa di connessione del progetto (copiata dalla pagina **Panoramica** del progetto nel portale Fonderia Azure AI).
+    1. Nel file di codice sostituire il segnaposto **your_project_endpoint** con l'endpoint del progetto, copiato dalla pagina **Panoramica** del progetto nel Portale Fonderia Azure AI.
     1. Sostituire il segnaposto **your_model_deployment** con il nome assegnato alla distribuzione modello GPT-4o (per impostazione predefinita `gpt-4o`).
 
 1. *Dopo* aver sostituito i segnaposto con l'editor di codice, usare il comando **CTRL+S** aver sostituito i segnaposto con l'editor di codice, usare il comando **Fare clic con il pulsante destro del mouse > Salva** per **salvare le modifiche** e quindi usare il comando **CTRL+Q** o **Fare clic con il pulsante destro del mouse > Esci** per chiudere l'editor di codice mantenendo aperta la riga di comando di Cloud Shell.
@@ -140,7 +118,18 @@ A questo punto è possibile eseguire più script che inviano richieste diverse a
    code start-prompt.py
     ```
 
-1. Nel riquadro della riga di comando di Cloud Shell, sotto l'editor di codice, immettere il seguente comando per **eseguire l'applicazione**:
+1. Nel riquadro della riga di comando di Cloud Shell immettere il comando seguente per accedere ad Azure.
+
+    ```
+   az login
+    ```
+
+    **<font color="red">È necessario accedere ad Azure, anche se la sessione di Cloud Shell è già autenticata.</font>**
+
+    > **Nota**: nella maggior parte degli scenari, il semplice uso di *az login* sarà sufficiente. Tuttavia, in caso di sottoscrizioni in più tenant, potrebbe essere necessario specificare il tenant usando il parametro *--tenant*. Per dettagli, visualizzare [Accedere ad Azure in modo interattivo usando l'interfaccia della riga di comando di Azure](https://learn.microsoft.com/cli/azure/authenticate-azure-cli-interactively).
+    
+1. Quando richiesto, seguire le istruzioni per aprire la pagina di accesso in una nuova scheda e immettere il codice di autenticazione fornito e le credenziali di Azure. Completare quindi il processo di accesso nella riga di comando, selezionando la sottoscrizione contenente l'hub di Fonderia Azure AI, se richiesto.
+1. Dopo aver eseguito l'accesso, immettere il comando seguente per eseguire l'applicazione:
 
     ```
    python start-prompt.py
