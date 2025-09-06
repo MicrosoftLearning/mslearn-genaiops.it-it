@@ -90,7 +90,7 @@ Iniziare recuperando le informazioni necessarie da autenticare per interagire co
     ```
    python -m venv labenv
    ./labenv/bin/Activate.ps1
-   pip install python-dotenv openai azure-identity azure-ai-projects azure-ai-inference azure-monitor-opentelemetry
+   pip install python-dotenv openai azure-identity azure-ai-projects opentelemetry-instrumentation-openai-v2 azure-monitor-opentelemetry
     ```
 
 1. Immettere il comando seguente per aprire il file di configurazione fornito:
@@ -184,11 +184,12 @@ Per visualizzare i dati raccolti dalle interazioni con il modello, accedere al d
 ### Passare a Monitoraggio di Azure dal portale Fonderia Azure AI
 
 1. Passare alla scheda nel browser con il **portale Fonderia Azure AI** aperto.
-1. Usare il menu a sinistra, selezionare **Traccia**.
-1. Selezionare il collegamento nella parte superiore, che indica **Eseguire il checkout delle informazioni dettagliate per il dashboard delle applicazioni di IA generativa**. Il collegamento aprirà Monitoraggio di Azure in una nuova scheda.
-1. Esaminare la **panoramica** fornendo dati riepilogati delle interazioni con il modello distribuito.
+1. Usare il menu a sinistra e selezionare **Monitoraggio**.
+1. Selezionare l'opzione **Utilizzo risorse** ed esaminare i dati riepilogati delle interazioni con il modello distribuito.
 
-## Interpretare le metriche di monitoraggio in Monitoraggio di Azure
+> **Nota**: È anche possibile selezionare **Esplora metriche di Monitoraggio di Azure** nella parte inferiore della pagina Monitoraggio per una visualizzazione completa di tutte le metriche disponibili. Il collegamento aprirà Monitoraggio di Azure in una nuova scheda.
+
+## Interpretare le metriche di monitoraggio
 
 Ora è il momento di analizzare i dati e iniziare a interpretare cosa dicono.
 
@@ -196,45 +197,41 @@ Ora è il momento di analizzare i dati e iniziare a interpretare cosa dicono.
 
 Concentrarsi prima sulla sezione relativa **all'utilizzo dei token** ed esaminare le metriche seguenti:
 
-- **Token di richiesta**: numero totale di token usati nell'input (le richieste inviate) in tutte le chiamate di modello.
-
-> Pensare a questo come al *costo di porre* al modello una domanda.
-
-- **Token di completamento**: numero di token restituiti dal modello come output, essenzialmente la lunghezza delle risposte.
-
-> I token di completamento generati spesso rappresentano la maggior parte dell'utilizzo e dei costi dei token, soprattutto per le risposte lunghe o dettagliate.
-
-- **Totale token**: i token di richiesta combinati e i token di completamento.
-
-> Metrica più importante per la fatturazione e le prestazioni, perché determina la latenza e il costo.
-
-- **Chiamate totali**: numero di richieste di inferenza separate, ovvero quante volte è stato chiamato il modello.
+- **Richieste totali**: Numero di richieste di inferenza separate, ovvero quante volte è stato chiamato il modello.
 
 > Utile per analizzare la velocità effettiva e comprendere il costo medio per chiamata.
 
+- **Numero totale di token**: Totale dei token di richiesta e i token di completamento combinati.
+
+> Metrica più importante per la fatturazione e le prestazioni, perché determina la latenza e il costo.
+
+- **Numero di token di richiesta**: Numero totale di token usati nell'input (le richieste inviate) in tutte le chiamate di modello.
+
+> Pensare a questo come al *costo di porre* al modello una domanda.
+
+- **Numero di token di completamento**: Numero di token restituiti dal modello come output, essenzialmente la lunghezza delle risposte.
+
+> I token di completamento generati spesso rappresentano la maggior parte dell'utilizzo e dei costi dei token, soprattutto per le risposte lunghe o dettagliate.
+
 ### Confrontare le singole richieste
 
-Scorrere verso il basso per trovare gli **intervalli di IA generativa**, visualizzati come tabella in cui ogni richiesta viene rappresentata come una nuova riga di dati. Esaminare e confrontare il contenuto delle colonne seguenti:
-
-- **Stato**: indica se una chiamata di modello è riuscita o meno.
-
-> Usare questa opzione per identificare le richieste problematiche o gli errori di configurazione. L'ultima richiesta non è probabilmente riuscita perché era troppo lunga.
-
-- **Durata**: indica quanto tempo il modello ha impiegato per rispondere, in millisecondi.
-
-> Confrontare le righe per esplorare quali criteri di richiesta generano tempi di elaborazione più lunghi.
+1. Usare il menu a sinistra, selezionare **Traccia**. Espandere ogni chiamata **generate_completion** per IA generativa per visualizzare le chiamate figlio. Ogni richiesta è rappresentata come una nuova riga di dati. Esaminare e confrontare il contenuto delle colonne seguenti:
 
 - **Input**: mostra il messaggio utente inviato al modello.
 
 > Utilizzare questa colonna per valutare le formulazioni delle richieste efficienti o problematiche.
 
-- **Sistema**: mostra il messaggio di sistema usato nella richiesta (se presente).
-
-> Confrontare le voci per valutare l'impatto dell'uso o della modifica dei messaggi di sistema.
-
 - **Output**: contiene la risposta del modello.
 
 > Usarlo per valutare il livello di dettaglio, la pertinenza e la coerenza. In particolare in relazione ai conteggi dei token e alla durata.
+
+- **Durata**: indica quanto tempo il modello ha impiegato per rispondere, in millisecondi.
+
+> Confrontare le righe per esplorare quali criteri di richiesta generano tempi di elaborazione più lunghi.
+
+- **Operazione riuscita**: Indica se una chiamata di modello è riuscita o meno.
+
+> Usare questa opzione per identificare le richieste problematiche o gli errori di configurazione. L'ultima richiesta non è probabilmente riuscita perché era troppo lunga.
 
 ## (FACOLTATIVO) Creare un avviso
 

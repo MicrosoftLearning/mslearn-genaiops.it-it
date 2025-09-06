@@ -124,16 +124,59 @@ Per sperimentare ed eseguire rapidamente l'iterazione, si userà un set di scrip
 
 A questo punto si eseguirà uno script che inserisce e pre-elabora i dati, crea incorporamenti e compila un archivio vettoriale e un indice, consentendo infine di implementare un sistema RAG in modo efficace.
 
-1. Eseguire il comando seguente per **visualizzare lo script** fornito:
+1. Eseguire il comando seguente per **modificare lo script** fornito:
 
     ```powershell
    code RAG.py
     ```
 
-1. Esaminare lo script e notare che usa un file CSV con recensioni di hotel come dati di base. È possibile visualizzare il contenuto di questo file eseguendo il comando `download app_hotel_reviews.csv` e aprendo il file.
+1. Nello script individuare **# Initialize the components that will be used from LangChain's suite of integrations**. Sotto questo commento, incollare il codice seguente:
+
+    ```python
+   # Initialize the components that will be used from LangChain's suite of integrations
+   llm = AzureChatOpenAI(azure_deployment=llm_name)
+   embeddings = AzureOpenAIEmbeddings(azure_deployment=embeddings_name)
+   vector_store = InMemoryVectorStore(embeddings)
+    ```
+
+1. Esaminare lo script e notare che usa un file CSV con recensioni di hotel come dati di base. È possibile visualizzare il contenuto di questo file eseguendo il comando `download app_hotel_reviews.csv` nel riquadro della riga di comando e aprendo il file.
+1. Individuare quindi **# Split the documents into chunks for embedding and vector storage**. Sotto questo commento, incollare il codice seguente:
+
+    ```python
+   # Split the documents into chunks for embedding and vector storage
+   text_splitter = RecursiveCharacterTextSplitter(
+       chunk_size=200,
+       chunk_overlap=20,
+       add_start_index=True,
+   )
+   all_splits = text_splitter.split_documents(docs)
+    
+   print(f"Split documents into {len(all_splits)} sub-documents.")
+    ```
+
+    Il codice precedente suddividerà un set di documenti di grandi dimensioni in blocchi più piccoli. Questo è importante perché molti modelli di incorporamento, come quelli usati per la ricerca semantica o i database vettoriali, hanno un limite di token e offrono prestazioni migliori per i testi più brevi.
+
+1. Individuare quindi **# Embed the contents of each text chunk and insert these embeddings into a vector store**. Sotto questo commento, incollare il codice seguente:
+
+    ```python
+   # Embed the contents of each text chunk and insert these embeddings into a vector store
+   document_ids = vector_store.add_documents(documents=all_splits)
+    ```
+
+1. Individuare successivamente **# Retrieve relevant documents from the vector store based on user input**. Sotto questo commento incollare il codice seguente, prestando attenzione all'uso di un rientro appropriato:
+
+    ```python
+   # Retrieve relevant documents from the vector store based on user input
+   retrieved_docs = vector_store.similarity_search(question, k=10)
+   docs_content = "\n\n".join(doc.page_content for doc in retrieved_docs)
+    ```
+
+    Il codice precedente cerca nell'archivio di vettori i documenti più simili alla domanda relativa all'input dell'utente. La domanda viene convertita in un vettore tramite lo stesso modello di incorporamento usato per i documenti. Il sistema confronta quindi questo vettore con tutti i vettori archiviati e recupera quelli più simili.
+
+1. Salva le modifiche.
 1. **Eseguire lo script** immettendo il comando seguente nella riga di comando:
 
-    ```
+    ```powershell
    python RAG.py
     ```
 
